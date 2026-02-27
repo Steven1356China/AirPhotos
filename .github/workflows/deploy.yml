@@ -1,0 +1,78 @@
+name: Deploy AirPhotos to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+  SITE_URL: "https://steven1356china.github.io/AirPhotos"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.127.0'
+          extended: true
+          
+      - name: Build Site
+        run: |
+          # 创建必要的目录结构
+          mkdir -p layouts/login static/admin static/uploads/images content/blog content/pages content/faq data/gallery_categories
+          
+          # 替换配置中的占位符
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_KEY" ]; then
+            echo "替换 Supabase 配置..."
+            find . -name "*.html" -type f -exec sed -i "s|https://your-project.supabase.co|${SUPABASE_URL}|g" {} \;
+            find . -name "*.html" -type f -exec sed -i "s|your-anon-key|${SUPABASE_KEY}|g" {} \;
+          fi
+          
+          # 设置网站URL
+          if [ -n "$SITE_URL" ]; then
+            sed -i "s|https://steven1356china.github.io/AirPhotos/|${SITE_URL}/|g" config.yml
+          fi
+          
+          # 添加默认内容（如果不存在）
+          if [ ! -f "content/blog/welcome.md" ]; then
+            echo '---' > content/blog/welcome.md
+            echo 'title: "欢迎来到 AirPhotos"' >> content/blog/welcome.md
+            echo 'date: '$(date -I)' >> content/blog/welcome.md
+            echo 'author: "AirPhotos团队"' >> content/blog/welcome.md
+            echo 'description: "欢迎使用 AirPhotos 航空图片分享平台"' >> content/blog/welcome.md
+            echo '---' >> content/blog/welcome.md
+            echo '' >> content/blog/welcome.md
+            echo '## ✈️ 欢迎来到 AirPhotos！' >> content/blog/welcome.md
+            echo '' >> content/blog/welcome.md
+            echo '这是一个专为航空爱好者设计的图片分享平台。' >> content/blog/welcome.md
+          fi
+          
+          # 构建网站
+          echo "正在构建网站..."
+          hugo --minify
+          
+          # 创建 .nojekyll 文件（防止 GitHub Pages 的 Jekyll 处理）
+          touch ./public/.nojekyll
+          
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
