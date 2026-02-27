@@ -1,0 +1,45 @@
+baseURL: "https://steven1356china.github.io/AirPhotos/"
+languageCode: "zh-cn"
+title: "AirPhotos - 航空图片分享平台"
+theme: "hugo-theme-stack"
+
+params:
+  mainSections:
+    - posts
+  featuredImageField: "image"
+  showReadingTime: true
+  supabaseUrl: "https://your-project.supabase.co"  # 稍后替换
+  supabaseKey: "your-anon-key"                     # 稍后替换
+
+menu:
+  main:
+    - identifier: "gallery"
+      name: "✈️ 图片画廊"
+      url: "/airphotos/"
+      weight: 10
+    - identifier: "upload"
+      name: "📤 上传图片"
+      url: "/airphotos/"
+      weight: 20
+    - identifier: "admin"
+      name: "⚙️ 管理后台"
+      url: "/admin/"
+      weight: 30
+    - identifier: "help"
+      name: "❓ 帮助中心"
+      url: "/airphotos/#help"
+      weight: 40
+
+taxonomies:
+  category: "categories"
+  tag: "tags"
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+
+build:
+  writeStats: true
+  noChmod: true
+  noTimes: true
