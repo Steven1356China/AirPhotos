@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AirPhotos 管理后台</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        margin: 0; 
+        padding: 0; 
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
+        min-height: 100vh; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+    }
+    .login-container { 
+        background: white; 
+        padding: 50px; 
+        border-radius: 20px; 
+        box-shadow: 0 20px 60px rgba(14, 165, 233, 0.2); 
+        text-align: center; 
+        width: 100%; 
+        max-width: 450px;
+        border: 1px solid #bae6fd;
+    }
+    .logo {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #0ea5e9, #0369a1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .loader { 
+        border: 4px solid #e2e8f0; 
+        border-top: 4px solid #0ea5e9; 
+        border-radius: 50%; 
+        width: 50px; 
+        height: 50px; 
+        animation: spin 1s linear infinite; 
+        margin: 30px auto; 
+    }
+    @keyframes spin { 
+        0% { transform: rotate(0deg); } 
+        100% { transform: rotate(360deg); } 
+    }
+    h2 { 
+        color: #0f172a; 
+        margin-bottom: 10px; 
+    }
+    p { 
+        color: #64748b; 
+        margin-bottom: 30px; 
+    }
+    .error-container {
+        padding: 40px;
+        text-align: center;
+    }
+    .error-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        color: #ef4444;
+    }
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-block;
+        margin: 10px;
+        text-decoration: none;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+    }
+    .btn-outline {
+        background: transparent;
+        border: 2px solid #0ea5e9;
+        color: #0ea5e9;
+    }
+    .btn-outline:hover {
+        background: #f0f9ff;
+    }
+    .success-container {
+        text-align: center;
+        padding: 40px;
+    }
+    .success-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        color: #10b981;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">✈️ AirPhotos</div>
+    <h2>管理后台</h2>
+    <p>正在验证管理员权限...</p>
+    <div class="loader"></div>
+    <p id="message">请确保您已拥有管理员权限</p>
+  </div>
+
+  <script>
+    // 🔧 替换为你的 Supabase 配置（与主页面相同）
+    const SUPABASE_URL = 'https://your-project.supabase.co';
+    const SUPABASE_ANON_KEY = 'your-anon-key';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // 管理员邮箱列表（在这里添加你的管理员邮箱）
+    const ADMIN_EMAILS = ['admin@example.com', 'steven@example.com'];
+    
+    // 检查登录状态
+    supabase.auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // 检查是否是管理员
+        if (ADMIN_EMAILS.includes(user.email)) {
+          // 管理员权限验证通过，加载 Netlify CMS
+          loadNetlifyCMS();
+        } else {
+          // 普通用户，显示权限不足
+          showPermissionDenied(user.email);
+        }
+      } else {
+        // 未登录，跳转到登录页面
+        redirectToLogin();
+      }
+    });
+    
+    // 加载 Netlify CMS（用于管理文章内容）
+    function loadNetlifyCMS() {
+      // 显示加载成功信息
+      document.body.innerHTML = `
+        <div class="login-container">
+          <div class="success-icon">✅</div>
+          <h2>管理员验证成功</h2>
+          <p>正在加载内容管理后台...</p>
+          <div class="loader"></div>
+          <p>请稍候，正在初始化编辑器</p>
+        </div>
+      `;
+      
+      // 延迟加载 CMS，确保用户体验
+      setTimeout(() => {
+        // 创建并加载 Netlify CMS 脚本
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js';
+        script.onload = () => {
+          // 移除加载界面，Netlify CMS 会自动初始化
+          document.body.innerHTML = '';
+          
+          // 可选：添加自定义样式
+          const style = document.createElement('style');
+          style.textContent = `
+            /* 自定义 CMS 样式 */
+            .nc-app-header {
+              background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%) !important;
+            }
+            .nc-app-header h1 {
+              color: white !important;
+            }
+            .nc-button-primary {
+              background: #0ea5e9 !important;
+              border-color: #0ea5e9 !important;
+            }
+          `;
+          document.head.appendChild(style);
+        };
+        
+        script.onerror = () => {
+          document.body.innerHTML = `
+            <div class="error-container">
+              <div class="error-icon">⚠️</div>
+              <h2>加载失败</h2>
+              <p>无法加载内容管理编辑器，请检查网络连接</p>
+              <button class="btn btn-primary" onclick="location.reload()">重试</button>
+              <a href="/login" class="btn btn-outline">返回主页面</a>
+            </div>
+          `;
+        };
+        
+        document.head.appendChild(script);
+        
+        // 添加 Netlify CMS 样式
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/netlify-cms@^2.0.0/dist/cms.css';
+        document.head.appendChild(link);
+        
+      }, 1000);
+    }
+    
+    // 显示权限不足页面
+    function showPermissionDenied(email) {
+      document.body.innerHTML = `
+        <div class="login-container">
+          <div class="error-icon">🚫</div>
+          <h2>权限不足</h2>
+          <p>您的账号 <strong>${email}</strong> 没有管理员权限</p>
+          <p style="font-size: 14px; margin-top: 20px;">如需管理员权限，请联系网站所有者</p>
+          <div style="margin-top: 30px;">
+            <button class="btn btn-primary" onclick="logout()">退出登录</button>
+            <a href="/login" class="btn btn-outline">返回主页面</a>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 跳转到登录页面
+    function redirectToLogin() {
+      // 显示重定向信息
+      document.body.innerHTML = `
+        <div class="login-container">
+          <div class="logo">✈️ AirPhotos</div>
+          <h2>请先登录</h2>
+          <p>正在跳转到登录页面...</p>
+          <div class="loader"></div>
+          <p>如果页面没有自动跳转，请点击下方链接</p>
+          <a href="/login" class="btn btn-primary" style="margin-top: 20px;">前往登录</a>
+        </div>
+      `;
+      
+      // 3秒后自动跳转
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 3000);
+    }
+    
+    // 退出登录
+    function logout() {
+      supabase.auth.signOut().then(() => {
+        window.location.href = '/login';
+      });
+    }
+    
+    // 添加键盘快捷键支持
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+Alt+L 快速退出
+      if (e.ctrlKey && e.altKey && e.key === 'l') {
+        logout();
+      }
+      // Esc 键返回主页
+      if (e.key === 'Escape') {
+        window.location.href = '/login';
+      }
+    });
+    
+    // 页面加载时显示 AirPhotos 版权信息
+    window.onload = () => {
+      // 添加页脚版权信息
+      const footer = document.createElement('div');
+      footer.style.cssText = `
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        color: #64748b;
+        font-size: 12px;
+        opacity: 0.7;
+      `;
+      footer.innerHTML = '✈️ AirPhotos Admin v1.0';
+      document.body.appendChild(footer);
+    };
+  </script>
+</body>
+</html>
