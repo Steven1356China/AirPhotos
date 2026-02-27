@@ -1,0 +1,81 @@
+backend:
+  name: github
+  repo: Steven1356China/AirPhotos  # 修改为你的仓库名
+  branch: main
+  auth_scope: repo
+  base_url: "https://steven1356china.github.io/AirPhotos"  # 你的网站地址
+
+# 网站名称和描述
+site_url: "https://steven1356china.github.io/AirPhotos"
+display_url: "https://steven1356china.github.io/AirPhotos"
+logo_url: "/logo.png"  # 你可以上传一个logo.png到static目录
+
+# 本地化设置
+locale: "zh"
+
+# 媒体文件设置
+media_folder: "static/uploads/images"  # 图片存储路径
+public_folder: "/uploads/images"       # 网站访问路径
+
+# 内容集合
+collections:
+  # 博客文章
+  - name: "blog"
+    label: "博客文章"
+    folder: "content/blog"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "发布时间", name: "date", widget: "datetime" }
+      - { label: "作者", name: "author", widget: "string", default: "AirPhotos团队" }
+      - { label: "封面图片", name: "image", widget: "image", required: false }
+      - { label: "简介", name: "description", widget: "text", required: false }
+      - { label: "正文", name: "body", widget: "markdown" }
+      - label: "分类"
+        name: "categories"
+        widget: "list"
+        required: false
+        field: { label: "分类", name: "category", widget: "string" }
+      - label: "标签"
+        name: "tags"
+        widget: "list"
+        required: false
+        field: { label: "标签", name: "tag", widget: "string" }
+      - { label: "草稿", name: "draft", widget: "boolean", default: false }
+
+  # 页面
+  - name: "pages"
+    label: "页面"
+    folder: "content/pages"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "页面URL", name: "url", widget: "string", hint: "例如: /about" }
+      - { label: "正文", name: "body", widget: "markdown" }
+
+  # 常见问题
+  - name: "faq"
+    label: "常见问题"
+    folder: "content/faq"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "问题", name: "question", widget: "string" }
+      - { label: "回答", name: "answer", widget: "markdown" }
+      - { label: "排序", name: "order", widget: "number", default: 0 }
+
+  # 图片库管理（如果需要在CMS中管理）
+  - name: "gallery_categories"
+    label: "图片分类"
+    folder: "data/gallery_categories"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "分类名称", name: "name", widget: "string" }
+      - { label: "描述", name: "description", widget: "text" }
+      - { label: "图标", name: "icon", widget: "string", default: "✈️" }
+      - { label: "排序", name: "order", widget: "number", default: 0 }
