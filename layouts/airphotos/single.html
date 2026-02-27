@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirPhotos - 航空图片分享平台</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        :root { 
+            --primary: #0ea5e9; 
+            --success: #10b981; 
+            --warning: #f59e0b; 
+            --danger: #ef4444; 
+            --sky-blue: #e0f2fe;
+            --gray-100: #f3f4f6; 
+            --gray-800: #1f2937; 
+        }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 20px; 
+            box-shadow: 0 25px 70px rgba(0,0,0,0.3); 
+            overflow: hidden; 
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .header { 
+            background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%); 
+            color: white; 
+            padding: 25px 40px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 3px solid #38bdf8;
+        }
+        .logo { 
+            font-size: 28px; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+        .logo-icon {
+            font-size: 32px;
+        }
+        .user-menu { 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+        }
+        .avatar { 
+            width: 44px; 
+            height: 44px; 
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%); 
+            color: white; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+        .main-content { 
+            display: flex; 
+            min-height: 600px;
+            background: #f8fafc;
+        }
+        .sidebar { 
+            width: 280px; 
+            background: white; 
+            padding: 35px 25px; 
+            border-right: 1px solid #e2e8f0;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.05);
+        }
+        .nav-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            padding: 16px 20px; 
+            margin-bottom: 10px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            color: #475569; 
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            border: 2px solid transparent;
+        }
+        .nav-item:hover { 
+            background: #f0f9ff; 
+            color: var(--primary);
+            transform: translateX(5px);
+            border-color: #e0f2fe;
+        }
+        .nav-item.active { 
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
+            color: var(--primary); 
+            border-color: #bae6fd;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+        }
+        .content-area { 
+            flex: 1; 
+            padding: 35px; 
+            background: #f8fafc;
+        }
+        .auth-forms, .user-dashboard { 
+            display: none; 
+        }
+        .welcome-section { 
+            text-align: center; 
+            padding: 60px 20px; 
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            margin: 20px 0;
+        }
+        .welcome-section h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #0ea5e9, #0369a1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .features { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 25px; 
+            margin-top: 50px; 
+        }
+        .feature-card { 
+            background: white; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 16px; 
+            padding: 30px; 
+            text-align: center; 
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+        }
+        .feature-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 15px 35px rgba(14, 165, 233, 0.2);
+            border-color: #bae6fd;
+        }
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            padding: 20px;
+            border-radius: 50%;
+            color: #0369a1;
+        }
+        .form-container { 
+            max-width: 450px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .form-group { 
+            margin-bottom: 25px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 10px; 
+            font-weight: 600; 
+            color: var(--gray-800);
+            font-size: 15px;
+        }
+        input, textarea, select { 
+            width: 100%; 
+            padding: 14px 18px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            transition: all 0.3s;
+            background: #f8fafc;
+        }
+        input:focus, textarea:focus, select:focus { 
+            outline: none; 
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+        .btn { 
+            padding: 14px 28px; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 10px;
+            min-width: 140px;
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+        }
+        .btn-success { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .btn-danger { 
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        .btn-outline { 
+            background: transparent; 
+            border: 2px solid var(--primary); 
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .btn-outline:hover {
+            background: #f0f9ff;
+        }
+        .message { 
+            padding: 16px 20px; 
+            border-radius: 10px; 
+            margin-bottom: 25px; 
+            display: none;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .message.success { 
+            background: #d1fae5; 
+            color: #065f46; 
+            border: 2px solid #a7f3d0; 
+        }
+        .message.error { 
+            background: #fee2e2; 
+            color: #991b1b; 
+            border: 2px solid #fecaca; 
+        }
+        .message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #bfdbfe;
+        }
+        .upload-area { 
+            border: 3px dashed #cbd5e1; 
+            border-radius: 16px; 
+            padding: 60px 40px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            margin-bottom: 35px;
+            background: #f8fafc;
+            position: relative;
+            overflow: hidden;
+        }
+        .upload-area:hover { 
+            border-color: var(--primary);
+            background: #f0f9ff;
+            transform: translateY(-2px);
+        }
+        .upload-area.dragover { 
+            border-color: var(--primary);
+            background: #e0f2fe;
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
+        }
+        .upload-icon { 
+            font-size: 64px; 
+            color: var(--primary); 
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        .image-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 25px; 
+            margin-top: 35px; 
+        }
+        .image-card { 
+            background: white; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08); 
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+        .image-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border-color: #bae6fd;
+        }
+        .image-preview { 
+            width: 100%; 
+            height: 220px; 
+            object-fit: cover;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .image-info { 
+            padding: 20px; 
+        }
+        .status-badge { 
+            display: inline-block; 
+            padding: 6px 16px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .status-pending { 
+            background: #fef3c7; 
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .status-approved { 
+            background: #d1fae5; 
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .status-rejected { 
+            background: #fee2e2; 
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1000; 
+            align-items: center; 
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 35px; 
+            max-width: 600px; 
+            width: 90%; 
+            max-height: 85vh; 
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .close-modal { 
+            background: none; 
+            border: none; 
+            font-size: 28px; 
+            cursor: pointer; 
+            color: #64748b;
+            transition: color 0.3s;
+            line-height: 1;
+            padding: 5px;
+        }
+        .close-modal:hover {
+            color: #0f172a;
+        }
+        .admin-controls { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 25px; 
+        }
+        .stats-cards { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 35px; 
+        }
+        .stat-card { 
+            background: white; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 16px; 
+            padding: 25px; 
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .stat-card:hover {
+            border-color: #bae6fd;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.15);
+        }
+        .stat-number { 
+            font-size: 40px; 
+            font-weight: bold; 
+            margin: 15px 0;
+            background: linear-gradient(135deg, #0ea5e9, #0369a1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        @media (max-width: 768px) { 
+            .main-content { 
+                flex-direction: column; 
+            } 
+            .sidebar { 
+                width: 100%; 
+                order: 2;
+            } 
+            .header { 
+                flex-direction: column; 
+                gap: 20px; 
+                text-align: center; 
+                padding: 20px;
+            } 
+            .features { 
+                grid-template-columns: 1fr; 
+            }
+            .content-area {
+                padding: 25px;
+            }
+            .logo {
+                font-size: 24px;
+            }
+        }
+        .section-title {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-title:before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(to bottom, #0ea5e9, #0369a1);
+            border-radius: 2px;
+        }
+        .airplane-bg {
+            position: fixed;
+            bottom: -50px;
+            right: -50px;
+            font-size: 300px;
+            opacity: 0.03;
+            z-index: -1;
+            transform: rotate(-15deg);
+            pointer-events: none;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #0ea5e9;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .image-counter {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .counter-item {
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+        }
+        .counter-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .tag {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 2px 4px 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="airplane-bg">✈️</div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">✈️</span>
+                <span>AirPhotos</span>
+            </div>
+            <div class="user-menu" id="userMenu">
+                <div id="loggedInUser" style="display: none;">
+                    <div class="avatar" id="userAvatar"></div>
+                    <span id="userName" style="font-weight: 500;"></span>
+                    <button class="btn btn-outline btn-sm" onclick="logout()">退出</button>
+                </div>
+                <div id="loginButtons">
+                    <button class="btn btn-outline" onclick="showAuth('login')">登录</button>
+                    <button class="btn btn-primary" onclick="showAuth('register')">注册</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="nav-item active" onclick="showSection('dashboard')">
+                    <span>🏠</span> 首页
+                </div>
+                <div class="nav-item" onclick="showSection('upload')" id="navUpload">
+                    <span>📤</span> 上传图片
+                </div>
+                <div class="nav-item" onclick="showSection('myImages')" id="navMyImages">
+                    <span>🖼️</span> 我的图片
+                </div>
+                <div class="nav-item" onclick="showSection('gallery')">
+                    <span>🎨</span> 图片画廊
+                </div>
+                <div class="nav-item" onclick="showSection('admin')" id="navAdmin" style="display: none;">
+                    <span>⚙️</span> 管理员面板
+                </div>
+                <div class="nav-item" onclick="showSection('help')">
+                    <span>❓</span> 帮助中心
+                </div>
+            </div>
+            
+            <div class="content-area" id="contentArea">
+                <div id="welcomePage" class="welcome-section">
+                    <h1>✈️ AirPhotos - 航空图片分享</h1>
+                    <p style="font-size: 18px; color: #475569; margin-bottom: 30px;">分享你的航空摄影作品，与全球航空爱好者交流</p>
+                    <div class="features">
+                        <div class="feature-card">
+                            <div class="feature-icon">📸</div>
+                            <h3 style="margin-bottom: 10px; color: #0f172a;">专业航空摄影</h3>
+                            <p style="color: #64748b;">上传飞机、机场、航展等航空题材图片</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">👁️</div>
+                            <h3 style="margin-bottom: 10px; color: #0f172a;">内容审核保障</h3>
+                            <p style="color: #64748b;">确保图片质量和内容合规性</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">⚡</div>
+                            <h3 style="margin-bottom: 10px; color: #0f172a;">快速展示分享</h3>
+                            <p style="color: #64748b;">审核通过后立即在画廊展示</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 50px;">
+                        <button class="btn btn-primary btn-lg" onclick="showAuth('register')" style="padding: 16px 40px; font-size: 18px;">
+                            ✈️ 立即注册开始分享
+                        </button>
+                        <p style="margin-top: 20px; color: #64748b; font-size: 14px;">已有账户？ <a href="javascript:void(0)" onclick="showAuth('login')" style="color: #0ea5e9; text-decoration: none; font-weight: 500;">点击登录</a></p>
+                    </div>
+                </div>
+                
+                <div id="authSection" class="auth-forms">
+                    <div class="form-container">
+                        <div id="authTabs" style="display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;">
+                            <button class="btn btn-outline" onclick="showAuthTab('login')" style="flex: 1; padding: 12px;">登录</button>
+                            <button class="btn btn-outline" onclick="showAuthTab('register')" style="flex: 1; padding: 12px;">注册</button>
+                        </div>
+                        
+                        <div id="loginForm">
+                            <h2 style="margin-bottom: 25px; color: #0f172a;">登录 AirPhotos</h2>
+                            <div class="message error" id="loginError"></div>
+                            <div class="form-group">
+                                <label>邮箱地址</label>
+                                <input type="email" id="loginEmail" placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>密码</label>
+                                <input type="password" id="loginPassword" placeholder="输入密码">
+                            </div>
+                            <button class="btn btn-primary" onclick="login()" style="width: 100%; margin-top: 10px;">
+                                <span id="loginSpinner" style="display: none;" class="loading-spinner"></span>
+                                登录
+                            </button>
+                        </div>
+                        
+                        <div id="registerForm" style="display: none;">
+                            <h2 style="margin-bottom: 25px; color: #0f172a;">加入 AirPhotos</h2>
+                            <div class="message error" id="registerError"></div>
+                            <div class="message success" id="registerSuccess"></div>
+                            <div class="form-group">
+                                <label>邮箱地址</label>
+                                <input type="email" id="registerEmail" placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>用户名</label>
+                                <input type="text" id="registerUsername" placeholder="选择唯一用户名">
+                                <small style="color: #64748b; font-size: 13px;">将作为您在社区的显示名称</small>
+                            </div>
+                            <div class="form-group">
+                                <label>密码</label>
+                                <input type="password" id="registerPassword" placeholder="至少6位字符">
+                            </div>
+                            <div class="form-group">
+                                <label>确认密码</label>
+                                <input type="password" id="registerConfirm" placeholder="再次输入密码">
+                            </div>
+                            <button class="btn btn-primary" onclick="register()" style="width: 100%;">
+                                <span id="registerSpinner" style="display: none;" class="loading-spinner"></span>
+                                注册账号
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="userDashboard" class="user-dashboard">
+                    <div id="uploadSection" style="display: none;">
+                        <h2 class="section-title">📤 上传航空图片</h2>
+                        <div class="message info" id="uploadInfo">
+                            ✈️ 支持飞机、机场、航展等航空题材图片。格式：JPG、PNG，最大 5MB。上传后需要管理员审核。
+                        </div>
+                        
+                        <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-icon">📁</div>
+                            <h3 style="margin-bottom: 10px; color: #0f172a;">拖拽图片到这里，或点击选择</h3>
+                            <p style="color: #64748b;">支持 JPG、PNG 格式，最大 5MB</p>
+                            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                        </div>
+                        
+                        <div id="uploadForm" style="display: none;">
+                            <h3 style="margin-bottom: 20px; color: #0f172a;">图片信息</h3>
+                            <div class="form-group">
+                                <label>图片标题 *</label>
+                                <input type="text" id="imageTitle" placeholder="例如：国航 B747-8 降落北京首都机场">
+                            </div>
+                            <div class="form-group">
+                                <label>描述（可选）</label>
+                                <textarea id="imageDescription" rows="3" placeholder="拍摄地点、时间、机型等信息..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>标签（用逗号分隔）</label>
+                                <input type="text" id="imageTags" placeholder="波音747, 北京机场, 国航, 降落">
+                                <small style="color: #64748b; font-size: 13px;">建议标签：航空公司、机型、机场、拍摄类型等</small>
+                            </div>
+                            <div class="preview-container" style="margin: 25px 0; text-align: center;">
+                                <img id="imagePreview" style="max-width: 100%; max-height: 300px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <button class="btn btn-primary" onclick="uploadImage()" style="flex: 2;">
+                                    <span id="uploadSpinner" style="display: none;" class="loading-spinner"></span>
+                                    提交上传
+                                </button>
+                                <button class="btn btn-outline" onclick="cancelUpload()" style="flex: 1;">取消</button>
+                            </div>
+                        </div>
+                        
+                        <div id="uploadProgress" style="display: none; margin-top: 30px; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                            <h4 style="margin-bottom: 15px; color: #0f172a;">上传进度</h4>
+                            <div style="background: #e2e8f0; height: 12px; border-radius: 6px; margin-bottom: 10px; overflow: hidden;">
+                                <div id="progressBar" style="background: linear-gradient(90deg, #38bdf8, #0ea5e9); height: 100%; width: 0%; border-radius: 6px; transition: width 0.3s;"></div>
+                            </div>
+                            <p id="progressText" style="text-align: center; color: #64748b; font-size: 14px;">上传中...</p>
+                        </div>
+                    </div>
+                    
+                    <div id="myImagesSection" style="display: none;">
+                        <h2 class="section-title">🖼️ 我的图片</h2>
+                        <div class="image-counter">
+                            <div class="counter-item">
+                                <div class="counter-number" id="totalImages">0</div>
+                                <div style="color: #64748b;">总上传</div>
+                            </div>
+                            <div class="counter-item">
+                                <div class="counter-number" id="pendingCount" style="color: #f59e0b;">0</div>
+                                <div style="color: #64748b;">待审核</div>
+                            </div>
+                            <div class="counter-item">
+                                <div class="counter-number" id="approvedCount" style="color: #10b981;">0</div>
+                                <div style="color: #64748b;">已通过</div>
+                            </div>
+                            <div class="counter-item">
+                                <div class="counter-number" id="rejectedCount" style="color: #ef4444;">0</div>
+                                <div style="color: #64748b;">被拒绝</div>
+                            </div>
+                        </div>
+                        <div class="image-grid" id="myImagesGrid">
+                            <!-- 图片卡片会动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <div id="gallerySection" style="display: none;">
+                        <h2 class="section-title">🎨 AirPhotos 画廊</h2>
+                        <p style="margin-bottom: 25px; color: #64748b;">浏览所有通过审核的航空摄影作品，发现精彩瞬间</p>
+                        <div class="image-grid" id="publicGallery">
+                            <!-- 公共图片会动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <div id="adminSection" style="display: none;">
+                        <h2 class="section-title">⚙️ 管理员面板</h2>
+                        
+                        <div class="stats-cards">
+                            <div class="stat-card">
+                                <div style="font-size: 18px; color: #64748b;">📋 待审核</div>
+                                <div class="stat-number" id="adminPending">0</div>
+                                <div style="color: #64748b;">张图片等待审核</div>
+                            </div>
+                            <div class="stat-card">
+                                <div style="font-size: 18px; color: #64748b;">📊 总数</div>
+                                <div class="stat-number" id="adminTotal">0</div>
+                                <div style="color: #64748b;">平台图片总数</div>
+                            </div>
+                            <div class="stat-card">
+                                <div style="font-size: 18px; color: #64748b;">👥 用户</div>
+                                <div class="stat-number" id="adminUsers">0</div>
+                                <div style="color: #64748b;">注册用户数</div>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-controls">
+                            <button class="btn btn-primary" onclick="loadPendingImages()">
+                                <span id="refreshSpinner" style="display: none;" class="loading-spinner"></span>
+                                刷新待审核
+                            </button>
+                            <button class="btn btn-success" onclick="approveAllSelected()">批量通过</button>
+                            <button class="btn btn-danger" onclick="rejectAllSelected()">批量拒绝</button>
+                        </div>
+                        
+                        <div id="adminImagesList" style="margin-top: 30px;">
+                            <!-- 待审核图片列表 -->
+                        </div>
+                    </div>
+                    
+                    <div id="helpSection" style="display: none;">
+                        <h2 class="section-title">❓ AirPhotos 帮助中心</h2>
+                        <div style="max-width: 800px; line-height: 1.6; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                            <h3 style="margin-bottom: 20px; color: #0f172a;">📋 常见问题</h3>
+                            <div style="margin-bottom: 30px;">
+                                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #0ea5e9;">
+                                    <h4 style="margin-bottom: 10px; color: #0f172a;">Q: 可以上传什么类型的图片？</h4>
+                                    <p style="color: #475569;">A: AirPhotos 专为航空爱好者设计，支持飞机、机场、航展、航空器等相关图片。格式：JPG、PNG，最大5MB。</p>
+                                </div>
+                                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #10b981;">
+                                    <h4 style="margin-bottom: 10px; color: #0f172a;">Q: 审核需要多久？</h4>
+                                    <p style="color: #475569;">A: 通常24小时内完成审核。高质量、清晰、符合航空主题的图片更容易通过。</p>
+                                </div>
+                                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+                                    <h4 style="margin-bottom: 10px; color: #0f172a;">Q: 图片被拒绝怎么办？</h4>
+                                    <p style="color: #475569;">A: 你会收到拒绝原因。请确保图片清晰、内容相关、无版权问题。可根据反馈修改后重新上传。</p>
+                                </div>
+                                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #8b5cf6;">
+                                    <h4 style="margin-bottom: 10px; color: #0f172a;">Q: 如何成为管理员？</h4>
+                                    <p style="color: #475569;">A: 请联系网站所有者，提供你的注册邮箱。管理员账号需要在代码中配置。</p>
+                                </div>
+                            </div>
+                            
+                            <h3 style="margin-bottom: 20px; color: #0f172a;">✈️ 图片要求与指南</h3>
+                            <div style="background: #f0f9ff; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+                                <h4 style="margin-bottom: 15px; color: #0369a1;">推荐标签示例：</h4>
+                                <div>
+                                    <span class="tag">波音747</span>
+                                    <span class="tag">空客A380</span>
+                                    <span class="tag">北京首都机场</span>
+                                    <span class="tag">上海浦东机场</span>
+                                    <span class="tag">航展</span>
+                                    <span class="tag">降落</span>
+                                    <span class="tag">起飞</span>
+                                    <span class="tag">国航</span>
+                                    <span class="tag">南航</span>
+                                    <span class="tag">夜间摄影</span>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #f1f5f9; padding: 20px; border-radius: 12px;">
+                                <h4 style="margin-bottom: 15px; color: #0f172a;">📞 联系我们</h4>
+                                <p style="color: #475569;">如有问题或建议，请通过以下方式联系：</p>
+                                <ul style="color: #475569; padding-left: 20px; margin-top: 10px;">
+                                    <li>GitHub Issues: <a href="https://github.com/Steven1356China/AirPhotos/issues" style="color: #0ea5e9; text-decoration: none;">提交问题</a></li>
+                                    <li>管理员邮箱: admin@airphotos.com</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle" style="margin: 0; color: #0f172a;">图片详情</h2>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 🔧 替换为你的 Supabase 配置（部署时需要修改）
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let currentUser = null;
+        let isAdmin = false;
+        let selectedFile = null;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            loadPublicGallery();
+        });
+        
+        async function checkAuth() {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (session?.user) {
+                currentUser = session.user;
+                await loadUserProfile();
+                showUserDashboard();
+            } else {
+                showWelcomePage();
+            }
+        }
+        
+        async function loadUserProfile() {
+            if (!currentUser) return;
+            
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            
+            if (profile) {
+                isAdmin = currentUser.email === 'admin@example.com';
+                
+                document.getElementById('userAvatar').textContent = 
+                    profile.username ? profile.username[0].toUpperCase() : currentUser.email[0].toUpperCase();
+                document.getElementById('userName').textContent = profile.username || currentUser.email;
+                
+                document.getElementById('loggedInUser').style.display = 'flex';
+                document.getElementById('loginButtons').style.display = 'none';
+                
+                if (isAdmin) {
+                    document.getElementById('navAdmin').style.display = 'block';
+                }
+                
+                loadMyImages();
+                if (isAdmin) loadAdminData();
+            }
+        }
+        
+        function showWelcomePage() {
+            hideAllSections();
+            document.getElementById('welcomePage').style.display = 'block';
+            document.getElementById('loggedInUser').style.display = 'none';
+            document.getElementById('loginButtons').style.display = 'flex';
+            document.getElementById('userMenu').style.display = 'flex';
+        }
+        
+        function showUserDashboard() {
+            hideAllSections();
+            document.getElementById('userDashboard').style.display = 'block';
+            showSection('dashboard');
+        }
+        
+        function showAuth(type) {
+            hideAllSections();
+            document.getElementById('authSection').style.display = 'block';
+            showAuthTab(type);
+        }
+        
+        function showAuthTab(type) {
+            document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
+        }
+        
+        function showSection(section) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event?.target?.classList?.add('active');
+            
+            const sections = ['uploadSection', 'myImagesSection', 'gallerySection', 'adminSection', 'helpSection'];
+            sections.forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            
+            switch(section) {
+                case 'upload':
+                    document.getElementById('uploadSection').style.display = 'block';
+                    break;
+                case 'myImages':
+                    document.getElementById('myImagesSection').style.display = 'block';
+                    loadMyImages();
+                    break;
+                case 'gallery':
+                    document.getElementById('gallerySection').style.display = 'block';
+                    break;
+                case 'admin':
+                    if (isAdmin) {
+                        document.getElementById('adminSection').style.display = 'block';
+                        loadAdminData();
+                    }
+                    break;
+                case 'help':
+                    document.getElementById('helpSection').style.display = 'block';
+                    break;
+                case 'dashboard':
+                default:
+                    document.getElementById('uploadSection').style.display = 'block';
+                    break;
+            }
+        }
+        
+        function hideAllSections() {
+            document.getElementById('welcomePage').style.display = 'none';
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('userDashboard').style.display = 'none';
+        }
+        
+        async function register() {
+            const email = document.getElementById('registerEmail').value;
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirm = document.getElementById('registerConfirm').value;
+            
+            const errorEl = document.getElementById('registerError');
+            const successEl = document.getElementById('registerSuccess');
+            const spinner = document.getElementById('registerSpinner');
+            
+            if (!email || !username || !password) {
+                showMessage(errorEl, '请填写所有必填字段');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showMessage(errorEl, '两次输入的密码不一致');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage(errorEl, '密码至少需要6位字符');
+                return;
+            }
+            
+            try {
+                spinner.style.display = 'inline-block';
+                
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { username }
+                    }
+                });
+                
+                if (authError) throw authError;
+                
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .insert([
+                        {
+                            id: authData.user.id,
+                            username: username,
+                            created_at: new Date()
+                        }
+                    ]);
+                
+                if (profileError) throw profileError;
+                
+                spinner.style.display = 'none';
+                showMessage(successEl, '🎉 注册成功！请检查邮箱验证邮件，然后登录。');
+                showAuthTab('login');
+                
+            } catch (error) {
+                spinner.style.display = 'none';
+                showMessage(errorEl, error.message);
+            }
+        }
+        
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            const spinner = document.getElementById('loginSpinner');
+            
+            if (!email || !password) {
+                showMessage(errorEl, '请输入邮箱和密码');
+                return;
+            }
+            
+            try {
+                spinner.style.display = 'inline-block';
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) throw error;
+                
+                currentUser = data.user;
+                await loadUserProfile();
+                showUserDashboard();
+                
+                spinner.style.display = 'none';
+                
+            } catch (error) {
+                spinner.style.display = 'none';
+                showMessage(errorEl, error.message);
+            }
+        }
+        
+        async function logout() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            isAdmin = false;
+            showWelcomePage();
+        }
+        
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                handleFileSelect({ target: { files: e.dataTransfer.files } });
+            }
+        });
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                showMessage(document.getElementById('uploadInfo'), '请选择图片文件（JPG、PNG格式）', 'error');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage(document.getElementById('uploadInfo'), '图片大小不能超过5MB', 'error');
+                return;
+            }
+            
+            selectedFile = file;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('imagePreview').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            document.getElementById('uploadForm').style.display = 'block';
+            document.getElementById('uploadInfo').style.display = 'none';
+        }
+        
+        function cancelUpload() {
+            selectedFile = null;
+            document.getElementById('uploadForm').style.display = 'none';
+            document.getElementById('uploadInfo').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('imageTitle').value = '';
+            document.getElementById('imageDescription').value = '';
+            document.getElementById('imageTags').value = '';
+        }
+        
+        async function uploadImage() {
+            if (!selectedFile || !currentUser) return;
+            
+            const title = document.getElementById('imageTitle').value.trim();
+            const description = document.getElementById('imageDescription').value.trim();
+            const tags = document.getElementById('imageTags').value.split(',').map(t => t.trim()).filter(t => t);
+            
+            if (!title) {
+                showMessage(document.getElementById('uploadInfo'), '请填写图片标题', 'error');
+                return;
+            }
+            
+            document.getElementById('uploadProgress').style.display = 'block';
+            document.getElementById('progressBar').style.width = '0%';
+            const spinner = document.getElementById('uploadSpinner');
+            spinner.style.display = 'inline-block';
+            
+            try {
+                const fileExt = selectedFile.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2)}.${fileExt}`;
+                const filePath = `${currentUser.id}/${fileName}`;
+                
+                document.getElementById('progressText').textContent = '上传图片中...';
+                document.getElementById('progressBar').style.width = '30%';
+                
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('user-uploads')
+                    .upload(filePath, selectedFile, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                
+                if (uploadError) throw uploadError;
+                
+                document.getElementById('progressBar').style.width = '60%';
+                document.getElementById('progressText').textContent = '处理图片信息...';
+                
+                const { data: { publicUrl } } = supabase.storage
+                    .from('user-uploads')
+                    .getPublicUrl(filePath);
+                
+                const { data: dbData, error: dbError } = await supabase
+                    .from('images')
+                    .insert([
+                        {
+                            user_id: currentUser.id,
+                            title: title,
+                            description: description,
+                            image_url: publicUrl,
+                            status: 'pending',
+                            tags: tags,
+                            uploaded_at: new Date()
+                        }
+                    ]);
+                
+                if (dbError) throw dbError;
+                
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressText').textContent = '上传成功！';
+                spinner.style.display = 'none';
+                
+                setTimeout(() => {
+                    cancelUpload();
+                    document.getElementById('uploadProgress').style.display = 'none';
+                    loadMyImages();
+                    showMessage(document.getElementById('uploadInfo'), '✅ 图片上传成功！请等待管理员审核。', 'success');
+                }, 1000);
+                
+            } catch (error) {
+                document.getElementById('uploadProgress').style.display = 'none';
+                spinner.style.display = 'none';
+                showMessage(document.getElementById('uploadInfo'), '上传失败: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadMyImages() {
+            if (!currentUser) return;
+            
+            const { data: images, error } = await supabase
+                .from('images')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('uploaded_at', { ascending: false });
+            
+            if (error) {
+                console.error('加载图片失败:', error);
+                return;
+            }
+            
+            const total = images.length;
+            const pending = images.filter(img => img.status === 'pending').length;
+            const approved = images.filter(img => img.status === 'approved').length;
+            const rejected = images.filter(img => img.status === 'rejected').length;
+            
+            document.getElementById('totalImages').textContent = total;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('rejectedCount').textContent = rejected;
+            
+            const grid = document.getElementById('myImagesGrid');
+            grid.innerHTML = '';
+            
+            images.forEach(image => {
+                const card = createImageCard(image, true);
+                grid.appendChild(card);
+            });
+        }
+        
+        async function loadPublicGallery() {
+            const { data: images, error } = await supabase
+                .from('images')
+                .select('*, profiles(username)')
+                .eq('status', 'approved')
+                .order('uploaded_at', { ascending: false });
+            
+            if (error) {
+                console.error('加载画廊失败:', error);
+                return;
+            }
+            
+            const gallery = document.getElementById('publicGallery');
+            gallery.innerHTML = '';
+            
+            images.forEach(image => {
+                const card = createImageCard(image, false);
+                gallery.appendChild(card);
+            });
+        }
+        
+        function createImageCard(image, isOwn = false) {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            
+            const statusText = {
+                'pending': '⏳ 待审核',
+                'approved': '✅ 已通过',
+                'rejected': '❌ 已拒绝'
+            };
+            
+            const statusColor = {
+                'pending': 'status-pending',
+                'approved': 'status-approved',
+                'rejected': 'status-rejected'
+            };
+            
+            const tagsHtml = image.tags?.map(tag => `<span class="tag">${tag}</span>`).join('') || '';
+            
+            card.innerHTML = `
+                <img src="${image.image_url}" class="image-preview" alt="${image.title}" loading="lazy">
+                <div class="image-info">
+                    <div class="${statusColor[image.status]} status-badge">
+                        ${statusText[image.status]}
+                    </div>
+                    <h4 style="margin-bottom: 8px; color: #0f172a; font-size: 16px;">${image.title || '未命名图片'}</h4>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+                        📅 ${new Date(image.uploaded_at).toLocaleDateString('zh-CN', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}
+                    </p>
+                    ${image.description ? `<p style="font-size: 14px; color: #475569; margin-bottom: 12px; line-height: 1.4;">${image.description.substring(0, 60)}${image.description.length > 60 ? '...' : ''}</p>` : ''}
+                    ${tagsHtml ? `<div style="margin-bottom: 15px;">${tagsHtml}</div>` : ''}
+                    <button class="btn btn-outline" style="width: 100%; padding: 10px;" onclick="viewImageDetail('${image.id}', ${isOwn})">
+                        👁️ 查看详情
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        async function viewImageDetail(imageId, isOwn = false) {
+            const { data: image, error } = await supabase
+                .from('images')
+                .select('*, profiles(username)')
+                .eq('id', imageId)
+                .single();
+            
+            if (error) {
+                alert('加载图片详情失败');
+                return;
+            }
+            
+            let modalContent = '';
+            
+            if (isOwn || isAdmin) {
+                modalContent = `
+                    <div style="text-align: center;">
+                        <img src="${image.image_url}" style="max-width: 100%; max-height: 400px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 15px; color: #0f172a;">${image.title || '未命名图片'}</h3>
+                        ${image.description ? `<p style="margin-bottom: 20px; color: #475569; line-height: 1.6;">${image.description}</p>` : ''}
+                        <div style="margin: 25px 0; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: left;">
+                            <p style="margin-bottom: 10px;"><strong>状态:</strong> 
+                                <span class="${image.status === 'pending' ? 'status-pending' : image.status === 'approved' ? 'status-approved' : 'status-rejected'} status-badge" style="margin-left: 10px;">
+                                    ${image.status === 'pending' ? '⏳ 待审核' : image.status === 'approved' ? '✅ 已通过' : '❌ 已拒绝'}
+                                </span>
+                            </p>
+                            <p style="margin-bottom: 10px;"><strong>上传时间:</strong> ${new Date(image.uploaded_at).toLocaleString('zh-CN')}</p>
+                            ${image.reviewed_at ? `<p style="margin-bottom: 10px;"><strong>审核时间:</strong> ${new Date(image.reviewed_at).toLocaleString('zh-CN')}</p>` : ''}
+                            ${image.rejection_reason ? `<p style="margin-bottom: 10px;"><strong>拒绝原因:</strong> ${image.rejection_reason}</p>` : ''}
+                            ${image.tags?.length ? `<p style="margin-bottom: 10px;"><strong>标签:</strong> ${image.tags.map(tag => `<span class="tag">${tag}</span>`).join(' ')}</p>` : ''}
+                            <p style="margin-bottom: 0;"><strong>图片ID:</strong> ${image.id.substring(0, 8)}...</p>
+                        </div>
+                        ${image.status === 'pending' && isOwn ? `
+                            <button class="btn btn-danger" onclick="deleteImage('${image.id}')" style="margin-top: 15px;">🗑️ 删除图片</button>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                modalContent = `
+                    <div style="text-align: center;">
+                        <img src="${image.image_url}" style="max-width: 100%; max-height: 400px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 15px; color: #0f172a;">${image.title || '未命名图片'}</h3>
+                        ${image.description ? `<p style="margin-bottom: 20px; color: #475569; line-height: 1.6;">${image.description}</p>` : ''}
+                        <div style="margin: 25px 0; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: left;">
+                            <p style="margin-bottom: 10px;"><strong>上传者:</strong> ${image.profiles?.username || '匿名用户'}</p>
+                            <p style="margin-bottom: 10px;"><strong>上传时间:</strong> ${new Date(image.uploaded_at).toLocaleDateString('zh-CN', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric'
+                            })}</p>
+                            ${image.tags?.length ? `<p style="margin-bottom: 0;"><strong>标签:</strong> ${image.tags.map(tag => `<span class="tag">${tag}</span>`).join(' ')}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('modalTitle').textContent = image.title || '图片详情';
+            document.getElementById('modalContent').innerHTML = modalContent;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+        
+        async function deleteImage(imageId) {
+            if (!confirm('确定要删除这张图片吗？此操作不可撤销。')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('images')
+                    .delete()
+                    .eq('id', imageId);
+                
+                if (error) throw error;
+                
+                closeModal();
+                loadMyImages();
+                showMessage(document.getElementById('uploadInfo'), '🗑️ 图片删除成功', 'success');
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        async function loadAdminData() {
+            if (!isAdmin) return;
+            
+            const { count: pendingCount } = await supabase
+                .from('images')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending');
+            
+            const { count: totalCount } = await supabase
+                .from('images')
+                .select('*', { count: 'exact', head: true });
+            
+            const { count: userCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true });
+            
+            document.getElementById('adminPending').textContent = pendingCount || 0;
+            document.getElementById('adminTotal').textContent = totalCount || 0;
+            document.getElementById('adminUsers').textContent = userCount || 0;
+            
+            loadPendingImages();
+        }
+        
+        async function loadPendingImages() {
+            if (!isAdmin) return;
+            
+            const spinner = document.getElementById('refreshSpinner');
+            spinner.style.display = 'inline-block';
+            
+            const { data: images, error } = await supabase
+                .from('images')
+                .select('*, profiles(username)')
+                .eq('status', 'pending')
+                .order('uploaded_at', { ascending: false });
+            
+            spinner.style.display = 'none';
+            
+            if (error) {
+                console.error('加载待审核图片失败:', error);
+                showMessage(document.getElementById('uploadInfo'), '加载失败，请重试', 'error');
+                return;
+            }
+            
+            const list = document.getElementById('adminImagesList');
+            
+            if (images.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                        <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                        <h3 style="color: #0f172a; margin-bottom: 10px;">暂无待审核图片</h3>
+                        <p style="color: #64748b;">所有图片都已审核完毕</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #0f172a;">待审核图片 (${images.length}张)</h3>
+                <div style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+            `;
+            
+            images.forEach((image, index) => {
+                const tagsHtml = image.tags?.map(tag => `<span class="tag">${tag}</span>`).join('') || '';
+                
+                list.innerHTML += `
+                    <div style="padding: 20px; border-bottom: ${index < images.length - 1 ? '1px solid #e2e8f0' : 'none'};">
+                        <div style="display: flex; gap: 20px; align-items: flex-start;">
+                            <img src="${image.image_url}" style="width: 180px; height: 120px; object-fit: cover; border-radius: 10px; flex-shrink: 0;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                    <h4 style="margin: 0; color: #0f172a; font-size: 16px;">${image.title || '未命名图片'}</h4>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="btn btn-success btn-sm" onclick="approveImage('${image.id}')" style="padding: 8px 16px; font-size: 14px;">✅ 通过</button>
+                                        <button class="btn btn-danger btn-sm" onclick="showRejectModal('${image.id}')" style="padding: 8px 16px; font-size: 14px;">❌ 拒绝</button>
+                                        <button class="btn btn-outline btn-sm" onclick="viewImageDetail('${image.id}', false)" style="padding: 8px 16px; font-size: 14px;">👁️ 查看</button>
+                                    </div>
+                                </div>
+                                <p style="color: #64748b; font-size: 14px; margin-bottom: 8px;">
+                                    <strong>上传者:</strong> ${image.profiles?.username || '匿名用户'} | 
+                                    <strong>时间:</strong> ${new Date(image.uploaded_at).toLocaleString('zh-CN', { 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </p>
+                                ${image.description ? `<p style="color: #475569; font-size: 14px; margin-bottom: 10px;">${image.description.substring(0, 120)}${image.description.length > 120 ? '...' : ''}</p>` : ''}
+                                ${tagsHtml ? `<div style="margin-bottom: 10px;">${tagsHtml}</div>` : ''}
+                                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" class="select-image" data-id="${image.id}" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span style="color: #64748b; font-size: 14px;">选择此图片</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML += '</div>';
+        }
+        
+        async function approveImage(imageId) {
+            try {
+                const { error } = await supabase
+                    .from('images')
+                    .update({
+                        status: 'approved',
+                        reviewed_at: new Date(),
+                        reviewed_by: currentUser.id
+                    })
+                    .eq('id', imageId);
+                
+                if (error) throw error;
+                
+                loadAdminData();
+                loadPublicGallery();
+                showMessage(document.getElementById('uploadInfo'), '✅ 图片已批准', 'success');
+            } catch (error) {
+                alert('操作失败: ' + error.message);
+            }
+        }
+        
+        function showRejectModal(imageId) {
+            const reason = prompt('请输入拒绝原因（可选，将显示给用户）:');
+            if (reason !== null) {
+                rejectImage(imageId, reason || '图片不符合 AirPhotos 内容要求');
+            }
+        }
+        
+        async function rejectImage(imageId, reason) {
+            try {
+                const { error } = await supabase
+                    .from('images')
+                    .update({
+                        status: 'rejected',
+                        rejection_reason: reason,
+                        reviewed_at: new Date(),
+                        reviewed_by: currentUser.id
+                    })
+                    .eq('id', imageId);
+                
+                if (error) throw error;
+                
+                loadAdminData();
+                showMessage(document.getElementById('uploadInfo'), '❌ 图片已拒绝', 'success');
+            } catch (error) {
+                alert('操作失败: ' + error.message);
+            }
+        }
+        
+        function approveAllSelected() {
+            const checkboxes = document.querySelectorAll('.select-image:checked');
+            if (checkboxes.length === 0) {
+                alert('请先选择要批准的图片');
+                return;
+            }
+            
+            if (!confirm(`确定要批准选中的 ${checkboxes.length} 张图片吗？`)) return;
+            
+            checkboxes.forEach(checkbox => {
+                approveImage(checkbox.dataset.id);
+            });
+        }
+        
+        function rejectAllSelected() {
+            const checkboxes = document.querySelectorAll('.select-image:checked');
+            if (checkboxes.length === 0) {
+                alert('请先选择要拒绝的图片');
+                return;
+            }
+            
+            const reason = prompt('请输入拒绝原因（适用于所有选中图片）:');
+            if (reason === null) return;
+            
+            if (!confirm(`确定要拒绝选中的 ${checkboxes.length} 张图片吗？`)) return;
+            
+            checkboxes.forEach(checkbox => {
+                rejectImage(checkbox.dataset.id, reason);
+            });
+        }
+        
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+        
+        function showMessage(element, text, type = 'error') {
+            element.textContent = text;
+            element.className = `message ${type}`;
+            element.style.display = 'block';
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        window.onclick = (event) => {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
